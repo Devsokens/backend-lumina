@@ -98,7 +98,7 @@ async function bootstrap(): Promise<void> {
   }
 
   const port = configService.get<number>('app.port') ?? 3000;
-  await app.listen(port);
+  await app.listen(port, '0.0.0.0');
 
   console.log(`\n🚀 Lumina API démarrée sur : http://localhost:${port}/${apiPrefix}`);
   console.log(`📚 Documentation Swagger   : http://localhost:${port}/${apiPrefix}/docs\n`);
