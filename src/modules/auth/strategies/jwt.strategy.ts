@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { JwtPayload } from '../../shared/types';
+import type { JwtPayload } from '../../../shared/types';
 
 /**
  * Stratégie JWT Passport — Valide le token et injecte le payload dans req.user.

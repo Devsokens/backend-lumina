@@ -7,7 +7,7 @@ import { SupabaseService } from '../../shared/services/supabase.service';
 import { CreateTransactionDto, TransactionQueryDto } from './dto/transaction.dto';
 import { JwtPayload, TransactionStatus } from '../../shared/types';
 
-interface DailySummary {
+export interface DailySummary {
   date: string;
   totalSales: number;
   totalExpenses: number;

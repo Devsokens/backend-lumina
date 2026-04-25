@@ -10,7 +10,7 @@ import { AuthService } from './auth.service';
 import { LoginDto, RefreshTokenDto, RegisterDto } from './dto/auth.dto';
 import { Public } from '../../shared/decorators/public.decorator';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
-import { JwtPayload } from '../../shared/types';
+import type { JwtPayload } from '../../shared/types';
 
 /**
  * Contrôleur Auth — Gère l'inscription, la connexion et les sessions.

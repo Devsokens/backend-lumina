@@ -17,12 +17,12 @@ import {
   UserRole,
 } from '../../shared/types';
 
-interface AuthTokens {
+export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
 }
 
-interface AuthResponse {
+export interface AuthResponse {
   user: {
     id: string;
     email: string;
@@ -169,7 +169,7 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(dto.password, user.password_hash);
     if (!isPasswordValid) throw new UnauthorizedException(invalidCredentialsMsg);
 
-    const org = user.organizations as { id: string; sector: OrganizationSector; subscription_status: string };
+    const org = user.organizations as unknown as { id: string; sector: OrganizationSector; subscription_status: string };
 
     // 3. Générer les tokens
     const tokens = await this.generateTokens({
@@ -260,7 +260,7 @@ export class AuthService {
       { sub: payload.sub, organizationId: payload.organizationId, role: payload.role, sector: payload.sector },
       {
         secret: this.configService.get<string>('jwt.accessSecret'),
-        expiresIn: this.configService.get<string>('jwt.accessExpiresIn') ?? '15m',
+        expiresIn: (this.configService.get<string>('jwt.accessExpiresIn') ?? '15m') as any,
       },
     );
 
@@ -268,7 +268,7 @@ export class AuthService {
       { sub: payload.sub, organizationId: payload.organizationId, role: payload.role, sector: payload.sector },
       {
         secret: this.configService.get<string>('jwt.refreshSecret'),
-        expiresIn: this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d',
+        expiresIn: (this.configService.get<string>('jwt.refreshExpiresIn') ?? '7d') as any,
       },
     );
 

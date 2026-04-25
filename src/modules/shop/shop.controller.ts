@@ -14,7 +14,8 @@ import {
 } from './dto/shop.dto';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { Roles } from '../../shared/decorators/roles.decorator';
-import { JwtPayload, UserRole } from '../../shared/types';
+import { UserRole } from '../../shared/types';
+import type { JwtPayload } from '../../shared/types';
 
 @ApiTags('Shop - POS')
 @ApiBearerAuth('JWT-Auth')

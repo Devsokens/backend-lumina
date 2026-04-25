@@ -8,7 +8,8 @@ import { AiService } from './ai.service';
 import { GenerateReportDto } from './dto/ai.dto';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { Roles } from '../../shared/decorators/roles.decorator';
-import { JwtPayload, UserRole } from '../../shared/types';
+import { UserRole } from '../../shared/types';
+import type { JwtPayload } from '../../shared/types';
 import { OrganizationsService } from '../organizations/organizations.service';
 
 @ApiTags('AI (Lumina Assistant)')

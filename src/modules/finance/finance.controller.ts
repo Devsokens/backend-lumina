@@ -10,7 +10,8 @@ import { FinanceService } from './finance.service';
 import { CreateTransactionDto, TransactionQueryDto } from './dto/transaction.dto';
 import { CurrentUser } from '../../shared/decorators/current-user.decorator';
 import { Roles } from '../../shared/decorators/roles.decorator';
-import { JwtPayload, UserRole } from '../../shared/types';
+import { UserRole } from '../../shared/types';
+import type { JwtPayload } from '../../shared/types';
 
 @ApiTags('Finance')
 @ApiBearerAuth('JWT-Auth')
