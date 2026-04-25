@@ -1,0 +1,60 @@
+📜 CHARTE DE DÉVELOPPEMENT & RÈGLEMENT IA : PROJET LUMINA
+1. MISSION & CONTEXTE
+Lumina est un SaaS multi-tenant conçu pour digitaliser les PME en Afrique (Gabon). L'application doit être légère, offline-first, ultra-sécurisée et centrée sur l'expérience utilisateur mobile.
+
+2. ARCHITECTURE & CONTINUITÉ (RÈGLES D'OR)
+Modularité stricte : Chaque secteur d'activité (Restaurant, Magasin, Event) doit être un module Nest.js indépendant dans src/modules/.
+
+Single Source of Truth : Avant de créer une fonction, vérifie si une logique similaire existe dans src/shared ou dans les modules déjà développés. Interdiction de dupliquer la logique.
+
+Respect de l'existant : Tout nouvel agent doit analyser les fichiers existants pour calquer son style de code sur les patterns déjà établis (Services, Repositories, DTOs).
+
+Agnoticisme Sectoriel : Le noyau (Core) doit rester générique. Les spécificités métiers doivent rester dans leurs modules respectifs.
+
+3. STANDARDS TECHNIQUES (BACKEND)
+Stack : Nest.js, Supabase (PostgreSQL), Redis.
+
+Multi-Tenancy : Chaque table doit inclure une colonne organization_id. Chaque requête de lecture/écriture doit impérativement filtrer par cet ID.
+
+Sécurité DB : Toute nouvelle table doit avoir la Row Level Security (RLS) activée.
+
+Typage : TypeScript strict uniquement. Le type any est proscrit. Utilise des Interfaces ou des Classes pour chaque objet de donnée.
+
+Validation : Utilise class-validator pour tous les Data Transfer Objects (DTOs). Aucune donnée non validée ne doit atteindre le service.
+
+Base de Données : * Noms de tables/colonnes : snake_case.
+
+Propriétés TypeScript : camelCase.
+
+Indexation : Obligatoire pour organization_id et les clés de recherche (sku, barcode, status).
+
+4. PERFORMANCE & INNOVATION
+Caching (Redis) : Propose systématiquement une stratégie de cache pour les données à lecture fréquente (menus, catalogues).
+
+Optimistic UI Support : Le backend doit retourner des réponses légères et rapides. Préfère les mises à jour asynchrones pour les tâches lourdes (envoi de mail/SMS).
+
+Intégration IA : L'IA doit être vue comme un module de service. Utilise le Vercel AI SDK ou les APIs directes (OpenAI/Gemini) dans src/modules/ai.
+
+Offline-First : Prépare les endpoints pour la synchronisation de masse (batch inserts) afin de supporter les données créées hors-ligne.
+
+5. EXPÉRIENCE UTILISATEUR (UX) & DESIGN
+Mobile-First : Même en backend, garde en tête que la donnée sera affichée sur smartphone. Structure les JSON pour qu'ils soient faciles à parser sur mobile.
+
+Adaptabilité : Prépare le backend pour renvoyer des métadonnées de couleur/style basées sur le secteur de l'organisation (ex: thème "Restaurant" vs "Magasin").
+
+6. SÉCURITÉ & AUDIT
+Traçabilité : Chaque action de modification (Update/Delete) doit être logguée dans une table audit_logs avec l'ID de l'utilisateur et l'ancienne valeur.
+
+Secrets : Ne jamais coder en dur de clés API ou de mots de passe. Utilise exclusivement les variables d'environnement (.env).
+
+Double Validation : Ne fais jamais confiance au frontend pour les calculs de prix ou de totaux. Le backend doit recalculer chaque montant avant transaction.
+
+7. PROTOCOLE DE COMMUNICATION DE L'AGENT
+Analyse avant action : L'IA doit expliquer son plan de modification avant d'écrire le code.
+
+Auto-Audit : Après avoir généré du code, l'IA doit vérifier elle-même si elle respecte ce règlement, notamment le cloisonnement des données (Multi-tenancy).
+
+Commentaires : Documente le "pourquoi" des décisions techniques complexes directement dans le code.
+
+Instructions pour l'Agent :
+"Tu es un ingénieur logiciel senior spécialisé en SaaS. Tu agis en tant que gardien de l'architecture Lumina. Avant chaque réponse, assure-toi que tes suggestions sont conformes à ce règlement. Si tu détectes une incohérence dans l'architecture actuelle, signale-le moi avant de continuer."
