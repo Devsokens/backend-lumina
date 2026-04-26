@@ -59,43 +59,41 @@ async function bootstrap(): Promise<void> {
   app.useGlobalInterceptors(new TransformInterceptor());
 
   // ─── Documentation Swagger ────────────────────────────────
-  if (configService.get<string>('app.nodeEnv') !== 'production') {
-    const swaggerConfig = new DocumentBuilder()
-      .setTitle('🌟 Lumina API')
-      .setDescription(
-        'API du SaaS Lumina — Digitalisation des PME africaines. ' +
-        'Multi-tenant | Restaurant · Magasin · Événementiel',
-      )
-      .setVersion('1.0')
-      .addBearerAuth(
-        { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-        'JWT-Auth',
-      )
-      .addTag('Auth', 'Authentification et gestion des sessions')
-      .addTag('Organizations', 'Gestion des organisations (tenants)')
-      .addTag('Users', 'Gestion des utilisateurs et rôles')
-      .addTag('Products', 'Catalogue produits et stocks')
-      .addTag('Finance', 'Transactions et audit financier')
-      .addTag('Restaurant - Tables', 'Gestion des tables et QR codes')
-      .addTag('Restaurant - Orders', 'Commandes et cycle de vie')
-      .addTag('Restaurant - Kitchen', 'Interface cuisine temps réel')
-      .addTag('Shop - POS', 'Point de vente et caisse')
-      .addTag('Shop - Inventory', 'Stocks et mouvements')
-      .addTag('Shop - Suppliers', 'Gestion des fournisseurs')
-      .addTag('Shop - Customers', 'CRM clients et fidélité')
-      .addTag('Events', 'Gestion des événements')
-      .addTag('Tickets', 'Billetterie et scan')
-      .addTag('AI', 'Rapports IA et notifications WhatsApp')
-      .build();
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('🌟 Lumina API')
+    .setDescription(
+      'API du SaaS Lumina — Digitalisation des PME africaines. ' +
+      'Multi-tenant | Restaurant · Magasin · Événementiel',
+    )
+    .setVersion('1.0')
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
+      'JWT-Auth',
+    )
+    .addTag('Auth', 'Authentification et gestion des sessions')
+    .addTag('Organizations', 'Gestion des organisations (tenants)')
+    .addTag('Users', 'Gestion des utilisateurs et rôles')
+    .addTag('Products', 'Catalogue produits et stocks')
+    .addTag('Finance', 'Transactions et audit financier')
+    .addTag('Restaurant - Tables', 'Gestion des tables et QR codes')
+    .addTag('Restaurant - Orders', 'Commandes et cycle de vie')
+    .addTag('Restaurant - Kitchen', 'Interface cuisine temps réel')
+    .addTag('Shop - POS', 'Point de vente et caisse')
+    .addTag('Shop - Inventory', 'Stocks et mouvements')
+    .addTag('Shop - Suppliers', 'Gestion des fournisseurs')
+    .addTag('Shop - Customers', 'CRM clients et fidélité')
+    .addTag('Events', 'Gestion des événements')
+    .addTag('Tickets', 'Billetterie et scan')
+    .addTag('AI', 'Rapports IA et notifications WhatsApp')
+    .build();
 
-    const document = SwaggerModule.createDocument(app, swaggerConfig);
-    SwaggerModule.setup(`${apiPrefix}/docs`, app, document, {
-      swaggerOptions: {
-        persistAuthorization: true,
-        tagsSorter: 'alpha',
-      },
-    });
-  }
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup(`${apiPrefix}/docs`, app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      tagsSorter: 'alpha',
+    },
+  });
 
   const port = configService.get<number>('app.port') ?? 3000;
   await app.listen(port, '0.0.0.0');
