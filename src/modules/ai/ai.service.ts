@@ -5,8 +5,9 @@ import OpenAI from 'openai';
 import { SupabaseService } from '../../shared/services/supabase.service';
 import { FinanceService } from '../finance/finance.service';
 import { OrganizationsService } from '../organizations/organizations.service';
+import { WhatsappService } from '../../shared/services/whatsapp.service';
 import { GenerateReportDto } from './dto/ai.dto';
-import { SubscriptionStatus } from '../../shared/types';
+import { SubscriptionStatus, UserRole } from '../../shared/types';
 
 @Injectable()
 export class AiService {
@@ -18,6 +19,7 @@ export class AiService {
     private readonly supabaseService: SupabaseService,
     private readonly financeService: FinanceService,
     private readonly organizationsService: OrganizationsService,
+    private readonly whatsappService: WhatsappService,
   ) {
     const apiKey = this.configService.get<string>('openai.apiKey');
     if (apiKey) {
@@ -55,7 +57,7 @@ export class AiService {
   }
 
   /**
-   * Génère le rapport IA et l'envoie (mock WhatsApp pour l'instant).
+   * Génère le rapport IA et l'envoie via WhatsApp.
    */
   async generateAndSendReport(organizationId: string, orgName: string, sector: string, date?: string) {
     // 1. Récupérer les données financières
@@ -74,31 +76,52 @@ export class AiService {
 
       Rédige un rapport concis, professionnel et encourageant à envoyer au gérant sur WhatsApp (avec des émojis).
       Mets en évidence un conseil d'optimisation si nécessaire.
+      Important: Fais des phrases courtes adaptées à une lecture sur mobile.
     `;
 
     // 3. Appeler OpenAI
     let aiResponse = '';
     if (this.openai) {
-      const completion = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [{ role: 'system', content: prompt }],
-      });
-      aiResponse = completion.choices[0]?.message?.content ?? 'Impossible de générer l\'analyse.';
+      try {
+        const completion = await this.openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: [{ role: 'system', content: prompt }],
+        });
+        aiResponse = completion.choices[0]?.message?.content ?? 'Impossible de générer l\'analyse.';
+      } catch (err) {
+        this.logger.error(`Erreur OpenAI: ${(err as Error).message}`);
+        aiResponse = `[Lumina] Vos ventes d'aujourd'hui : ${summary.totalSales} XAF. (L'analyse détaillée est indisponible).`;
+      }
     } else {
-      aiResponse = `[Mode Mock] Bonjour ! Vos ventes d'aujourd'hui s'élèvent à ${summary.totalSales} XAF. Beau travail ! 🚀`;
+      aiResponse = `🌟 *Rapport Journalier Lumina* 🌟\n\nFélicitations pour votre journée chez *${orgName}* !\n\n📈 Ventes : ${summary.totalSales} XAF\n💰 Bénéfice : ${summary.netRevenue} XAF\n💳 Cash : ${summary.cashAmount} XAF\n📱 Mobile Money : ${summary.mobileMoneyAmount} XAF\n\nConseil : Continuez sur cette lancée ! 🚀`;
     }
 
-    // 4. Envoyer sur WhatsApp (Mock)
-    this.sendWhatsAppMessage(organizationId, aiResponse);
+    // 4. Récupérer le téléphone de l'admin
+    const adminPhone = await this.getAdminPhoneNumber(organizationId);
+
+    // 5. Envoyer sur WhatsApp
+    if (adminPhone) {
+      await this.whatsappService.sendMessage(adminPhone, aiResponse);
+    } else {
+      this.logger.warn(`⚠️ Impossible d'envoyer le rapport : aucun numéro trouvé pour l'org ${organizationId}`);
+    }
 
     return { report: aiResponse, rawData: summary };
   }
 
   /**
-   * Envoi de message WhatsApp (Simulé).
+   * Récupère le numéro de téléphone de l'administrateur de l'organisation.
    */
-  private sendWhatsAppMessage(organizationId: string, message: string) {
-    // Dans le futur : appel à graph.facebook.com via axios
-    this.logger.log(`📱 WhatsApp envoyé au gérant de ${organizationId}:\n${message}`);
+  private async getAdminPhoneNumber(organizationId: string): Promise<string | null> {
+    const { data, error } = await this.supabaseService.adminClient
+      .from('users')
+      .select('phone')
+      .eq('organization_id', organizationId)
+      .eq('role', UserRole.ORG_ADMIN)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error || !data?.phone) return null;
+    return data.phone;
   }
 }

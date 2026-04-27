@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { SupabaseService } from './services/supabase.service';
 import { RedisService } from './services/redis.service';
 import { AuditService } from './services/audit.service';
+import { WhatsappService } from './services/whatsapp.service';
 
 /**
  * Module Partagé Global — Exporté dans toute l'application.
@@ -15,7 +16,7 @@ import { AuditService } from './services/audit.service';
 @Global()
 @Module({
   imports: [ConfigModule],
-  providers: [SupabaseService, RedisService, AuditService],
-  exports: [SupabaseService, RedisService, AuditService],
+  providers: [SupabaseService, RedisService, AuditService, WhatsappService],
+  exports: [SupabaseService, RedisService, AuditService, WhatsappService],
 })
 export class SharedModule {}
