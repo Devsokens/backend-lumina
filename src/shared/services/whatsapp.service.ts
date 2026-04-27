@@ -16,7 +16,7 @@ export class WhatsappService {
     this.accessToken = this.configService.get<string>('whatsapp.accessToken') || '';
     this.phoneNumberId = this.configService.get<string>('whatsapp.phoneNumberId') || '';
     // L'URL par défaut de Facebook Graph API
-    this.baseUrl = this.configService.get<string>('whatsapp.apiUrl') || 'https://graph.facebook.com/v17.0';
+    this.baseUrl = this.configService.get<string>('whatsapp.apiUrl') || 'https://graph.facebook.com/v20.0';
   }
 
   /**

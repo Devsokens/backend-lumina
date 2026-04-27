@@ -98,9 +98,11 @@ export class AiService {
 
     // 4. Récupérer le téléphone de l'admin
     const adminPhone = await this.getAdminPhoneNumber(organizationId);
+    this.logger.log(`🔍 Recherche numéro admin pour l'org ${organizationId} : ${adminPhone || 'AUCUN TROUVÉ'}`);
 
     // 5. Envoyer sur WhatsApp
     if (adminPhone) {
+      this.logger.log(`📤 Tentative d'envoi WhatsApp vers ${adminPhone}...`);
       await this.whatsappService.sendMessage(adminPhone, aiResponse);
     } else {
       this.logger.warn(`⚠️ Impossible d'envoyer le rapport : aucun numéro trouvé pour l'org ${organizationId}`);
