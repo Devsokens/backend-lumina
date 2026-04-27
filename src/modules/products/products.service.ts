@@ -231,11 +231,6 @@ export class ProductsService {
   }
 
   private async invalidateProductCache(organizationId: string): Promise<void> {
-    const keys = await (this.redisService as unknown as { client: { keys: (pattern: string) => Promise<string[]>; del: (...keys: string[]) => Promise<number> } })
-      .client?.keys(`lumina:${organizationId}:products*`);
-    if (keys && keys.length > 0) {
-      this.logger.log(`🗑️  Cache produits invalidé: ${keys.length} clé(s)`);
-    }
     await this.redisService.invalidateOrganization(organizationId);
   }
 }
