@@ -46,18 +46,33 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   }
 
   async get<T>(key: string): Promise<T | null> {
-    const data = await this.client.get(key);
-    if (!data) return null;
-    return JSON.parse(data) as T;
+    try {
+      const data = await this.client.get(key);
+      if (!data) return null;
+      return JSON.parse(data) as T;
+    } catch (err) {
+      this.logger.warn(`Redis GET failed for key ${key}: ${(err as Error).message}`);
+      return null;
+    }
   }
 
   async set(key: string, value: unknown, ttl?: number): Promise<void> {
-    const serialized = JSON.stringify(value);
-    await this.client.setex(key, ttl ?? this.defaultTtl, serialized);
+    try {
+      const serialized = JSON.stringify(value);
+      await this.client.setex(key, ttl ?? this.defaultTtl, serialized);
+    } catch (err) {
+      this.logger.warn(`Redis SET failed for key ${key}: ${(err as Error).message}`);
+    }
   }
 
-  async del(key: string): Promise<void> {
-    await this.client.del(key);
+  async del(...keys: string[]): Promise<void> {
+    try {
+      if (keys.length > 0) {
+        await this.client.del(...keys);
+      }
+    } catch (err) {
+      this.logger.warn(`Redis DEL failed for keys: ${(err as Error).message}`);
+    }
   }
 
   /**
@@ -65,11 +80,15 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * À appeler lors d'une mise à jour critique (ex: modification du menu).
    */
   async invalidateOrganization(organizationId: string): Promise<void> {
-    const pattern = `lumina:${organizationId}:*`;
-    const keys = await this.client.keys(pattern);
-    if (keys.length > 0) {
-      await this.client.del(...keys);
-      this.logger.log(`🗑️  Cache invalidé pour org ${organizationId} (${keys.length} clés)`);
+    try {
+      const pattern = `lumina:${organizationId}:*`;
+      const keys = await this.client.keys(pattern);
+      if (keys.length > 0) {
+        await this.client.del(...keys);
+        this.logger.log(`🗑️  Cache invalidé pour org ${organizationId} (${keys.length} clés)`);
+      }
+    } catch (err) {
+      this.logger.warn(`Redis INVALIDATE failed for org ${organizationId}: ${(err as Error).message}`);
     }
   }
 
