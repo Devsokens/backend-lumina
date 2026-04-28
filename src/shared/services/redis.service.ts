@@ -8,13 +8,13 @@ import Redis from 'ioredis';
  *
  * Pattern de cache : organization_id est TOUJOURS inclus dans la clé
  * pour garantir l'isolation multi-tenant.
- * Exemple : `lumina:org_123:menu:products`
  */
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
   private client: Redis;
   private defaultTtl: number;
+  private isConnected = false;
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -26,75 +26,80 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       port: this.configService.get<number>('redis.port') ?? 6379,
       password: this.configService.get<string>('redis.password') || undefined,
       lazyConnect: true,
-      retryStrategy: (times) => Math.min(times * 50, 2000),
+      retryStrategy: (times) => {
+        if (times > 3) return null; // Stop retrying after 3 times to avoid log spam in production
+        return Math.min(times * 50, 2000);
+      },
     });
 
-    this.client.on('connect', () => this.logger.log('✅ Redis connecté'));
-    this.client.on('error', (err) => this.logger.error(`❌ Redis erreur: ${err.message}`));
+    this.client.on('connect', () => {
+      this.isConnected = true;
+      this.logger.log('✅ Redis connecté');
+    });
+
+    this.client.on('error', (err) => {
+      if (this.isConnected) {
+        this.logger.error(`❌ Redis erreur: ${err.message}`);
+        this.isConnected = false;
+      }
+    });
   }
 
   async onModuleDestroy(): Promise<void> {
     await this.client.quit();
   }
 
-  /**
-   * Construit une clé de cache namespaced par organisation.
-   * Garantit l'isolation multi-tenant des données en cache.
-   */
   buildKey(organizationId: string, ...parts: string[]): string {
     return `lumina:${organizationId}:${parts.join(':')}`;
   }
 
+  private isReady(): boolean {
+    return this.client && this.client.status === 'ready';
+  }
+
   async get<T>(key: string): Promise<T | null> {
     try {
+      if (!this.isReady()) return null;
       const data = await this.client.get(key);
       if (!data) return null;
       return JSON.parse(data) as T;
-    } catch (err) {
-      this.logger.warn(`Redis GET failed for key ${key}: ${(err as Error).message}`);
+    } catch {
       return null;
     }
   }
 
   async set(key: string, value: unknown, ttl?: number): Promise<void> {
     try {
+      if (!this.isReady()) return;
       const serialized = JSON.stringify(value);
       await this.client.setex(key, ttl ?? this.defaultTtl, serialized);
-    } catch (err) {
-      this.logger.warn(`Redis SET failed for key ${key}: ${(err as Error).message}`);
+    } catch {
+      // Silent error
     }
   }
 
   async del(...keys: string[]): Promise<void> {
     try {
-      if (keys.length > 0) {
-        await this.client.del(...keys);
-      }
-    } catch (err) {
-      this.logger.warn(`Redis DEL failed for keys: ${(err as Error).message}`);
+      if (!this.isReady() || keys.length === 0) return;
+      await this.client.del(...keys);
+    } catch {
+      // Silent error
     }
   }
 
-  /**
-   * Invalide tous les caches d'une organisation.
-   * À appeler lors d'une mise à jour critique (ex: modification du menu).
-   */
   async invalidateOrganization(organizationId: string): Promise<void> {
     try {
+      if (!this.isReady()) return;
       const pattern = `lumina:${organizationId}:*`;
       const keys = await this.client.keys(pattern);
       if (keys.length > 0) {
         await this.client.del(...keys);
-        this.logger.log(`🗑️  Cache invalidé pour org ${organizationId} (${keys.length} clés)`);
       }
-    } catch (err) {
-      this.logger.warn(`Redis INVALIDATE failed for org ${organizationId}: ${(err as Error).message}`);
+    } catch {
+      // Silent error
     }
   }
 
-  /**
-   * Pattern Cache-Aside : retourne le cache ou exécute la factory et met en cache.
-   */
   async getOrSet<T>(key: string, factory: () => Promise<T>, ttl?: number): Promise<T> {
     const cached = await this.get<T>(key);
     if (cached !== null) return cached;

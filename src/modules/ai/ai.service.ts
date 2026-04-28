@@ -65,18 +65,27 @@ export class AiService {
 
     // 2. Construire le prompt pour GPT-4o
     const prompt = `
-      Tu es l'assistant IA "Lumina", un conseiller stratégique pour PME.
-      Analyse les résultats du jour pour l'entreprise "${orgName}" (Secteur : ${sector}).
-      Date : ${summary.date}
-      - Ventes totales : ${summary.totalSales} XAF
-      - Dépenses : ${summary.totalExpenses} XAF
-      - Bénéfice net : ${summary.netRevenue} XAF
-      - Transactions : ${summary.transactionCount}
-      - Espèces : ${summary.cashAmount} XAF | Mobile Money : ${summary.mobileMoneyAmount} XAF
+      Tu es l'assistant stratégique "Lumina AI", expert en gestion de PME.
+      Analyse les résultats financiers de l'entreprise "${orgName}" (Secteur : ${sector}) pour la journée du ${summary.date}.
 
-      Rédige un rapport concis, professionnel et encourageant à envoyer au gérant sur WhatsApp (avec des émojis).
-      Mets en évidence un conseil d'optimisation si nécessaire.
-      Important: Fais des phrases courtes adaptées à une lecture sur mobile.
+      DONNÉES DU JOUR :
+      - Ventes totales : ${summary.totalSales} XAF
+      - Bénéfice net : ${summary.netRevenue} XAF (Marge brute)
+      - Volume : ${summary.transactionCount} transactions
+      - Répartition : ${summary.cashAmount} XAF (Espèces) | ${summary.mobileMoneyAmount} XAF (Mobile Money)
+      - Dépenses enregistrées : ${summary.totalExpenses} XAF
+
+      STRUCTURE DU RAPPORT (à envoyer sur WhatsApp) :
+      1. 📊 *BILAN DE LA JOURNÉE* : Un résumé impactant de la performance globale.
+      2. 🔍 *ANALYSE DES FLUX* : Analyse la répartition Cash vs Mobile Money. Si le cash est élevé, donne un rappel sur la sécurité.
+      3. 💡 *CONSEIL STRATÉGIQUE* : Donne un conseil spécifique au secteur ${sector}. Par exemple, si les ventes sont faibles, suggère une promotion. Si elles sont fortes, suggère de vérifier les stocks.
+      4. 🌟 *NOTE DU CONSULTANT* : Une remarque encourageante et personnalisée.
+
+      CONTRAINTES :
+      - Utilise un ton professionnel, chaleureux et expert.
+      - Utilise des émojis pour rendre la lecture agréable sur mobile.
+      - Fais des paragraphes courts et bien espacés.
+      - Ne mentionne pas que tu es une IA.
     `;
 
     // 3. Appeler OpenAI
@@ -85,7 +94,14 @@ export class AiService {
       try {
         const completion = await this.openai.chat.completions.create({
           model: 'gpt-4o',
-          messages: [{ role: 'system', content: prompt }],
+          messages: [
+            { 
+              role: 'system', 
+              content: 'Tu es Lumina AI, un consultant en gestion d\'entreprise africaine. Tu rédiges des rapports WhatsApp clairs, structurés et riches en conseils.' 
+            },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
         });
         aiResponse = completion.choices[0]?.message?.content ?? 'Impossible de générer l\'analyse.';
       } catch (err) {
